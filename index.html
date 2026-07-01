@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReportSathi — Understand your medical reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1B4B43;
+    --ink-deep: #0F2F2A;
+    --cream: #FBF8F3;
+    --cream-deep: #F3EDE2;
+    --sage: #E8EDE9;
+    --sage-line: #D3DED7;
+    --terracotta: #C97D4E;
+    --terracotta-deep: #B0673C;
+    --status-normal: #3A7D5C;
+    --status-normal-bg: #E6F1EA;
+    --status-watch: #C9914E;
+    --status-watch-bg: #FBF1E1;
+    --status-attention: #B4503F;
+    --status-attention-bg: #FAEAE6;
+    --serif: 'Lora', 'Noto Sans Devanagari', serif;
+    --sans: 'Inter', 'Noto Sans Devanagari', sans-serif;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink-deep);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--terracotta); color: white; }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    padding: 28px 0 0;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .logo .dot { color: var(--terracotta); }
+
+  /* Language toggle - signature element */
+  .lang-toggle {
+    display: inline-flex;
+    background: var(--sage);
+    border: 1px solid var(--sage-line);
+    border-radius: 999px;
+    padding: 4px;
+    position: relative;
+    gap: 2px;
+  }
+  .lang-toggle button {
+    border: none;
+    background: transparent;
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink);
+    opacity: 0.55;
+    transition: opacity 0.25s ease, color 0.25s ease;
+    position: relative;
+    z-index: 1;
+    font-family: var(--sans);
+  }
+  .lang-toggle button[lang="hi"] { font-family: 'Noto Sans Devanagari', var(--sans); }
+  .lang-toggle button.active {
+    opacity: 1;
+    color: white;
+  }
+  .lang-toggle .pill-bg {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: calc(50% - 4px);
+    background: var(--ink);
+    border-radius: 999px;
+    transition: transform 0.3s cubic-bezier(.65,0,.35,1);
+  }
+  .lang-toggle[data-lang="hi"] .pill-bg { transform: translateX(calc(100% + 4px)); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 56px 0 36px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(28px, 4.5vw, 42px);
+    line-height: 1.18;
+    margin: 0 0 14px;
+    color: var(--ink-deep);
+    letter-spacing: -0.015em;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--terracotta-deep);
+  }
+  .hero p {
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: #5C6E68;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Upload zone ---------- */
+  .upload-zone {
+    margin: 36px 0 8px;
+    border: 1.5px dashed var(--sage-line);
+    background: white;
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--terracotta);
+    background: #FFFCF8;
+  }
+  .upload-zone .icon {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 16px;
+    color: var(--ink);
+    opacity: 0.75;
+  }
+  .upload-zone .icon svg { width: 100%; height: 100%; }
+  .upload-zone .primary-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink-deep);
+    margin-bottom: 4px;
+  }
+  .upload-zone .secondary-text {
+    font-size: 13.5px;
+    color: #8A968F;
+  }
+  .upload-zone input[type="file"] { display: none; }
+
+  .file-chip {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: var(--sage);
+    border: 1px solid var(--sage-line);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    font-size: 14px;
+  }
+  .file-chip.show { display: inline-flex; }
+  .file-chip .name { font-weight: 600; color: var(--ink-deep); }
+  .file-chip .remove {
+    margin-left: auto;
+    cursor: pointer;
+    color: #8A968F;
+    font-size: 13px;
+    background: none;
+    border: none;
+    font-family: var(--sans);
+  }
+  .file-chip .remove:hover { color: var(--status-attention); }
+
+  .analyze-btn {
+    display: block;
+    width: 100%;
+    margin-top: 18px;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px 24px;
+    font-size: 15.5px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .analyze-btn[lang="hi"] { font-family: 'Noto Sans Devanagari', var(--sans); }
+  .analyze-btn:hover:not(:disabled) { background: var(--ink-deep); }
+  .analyze-btn:active:not(:disabled) { transform: scale(0.995); }
+  .analyze-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ---------- Disclaimer ---------- */
+  .disclaimer {
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: #8A968F;
+    text-align: center;
+    line-height: 1.55;
+    padding: 0 12px;
+  }
+  .disclaimer strong { color: #6B7873; }
+
+  /* ---------- Loading ---------- */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 56px 0;
+  }
+  .loading.show { display: block; }
+  .spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid var(--sage);
+    border-top-color: var(--terracotta);
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    animation: spin 0.85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { color: #5C6E68; font-size: 14.5px; }
+
+  /* ---------- Error ---------- */
+  .error-box {
+    display: none;
+    background: var(--status-attention-bg);
+    border: 1px solid #E8C7BE;
+    color: var(--status-attention);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 14px;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+  .error-box.show { display: block; }
+
+  /* ---------- Results ---------- */
+  .results {
+    display: none;
+    padding: 8px 0 80px;
+  }
+  .results.show { display: block; }
+
+  .results-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 40px 0 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .results-header h2 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink-deep);
+  }
+  .results-header .new-report-btn {
+    background: none;
+    border: 1px solid var(--sage-line);
+    color: var(--ink);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--sans);
+  }
+  .results-header .new-report-btn:hover { background: var(--sage); }
+
+  .summary-banner {
+    background: white;
+    border: 1px solid var(--sage-line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 22px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #3E4C46;
+  }
+  .summary-banner .label {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--terracotta-deep);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .test-card {
+    background: white;
+    border: 1px solid var(--sage-line);
+    border-left: 4px solid var(--status-normal);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 14px;
+  }
+  .test-card.watch { border-left-color: var(--status-watch); }
+  .test-card.attention { border-left-color: var(--status-attention); }
+
+  .test-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  .test-name {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--ink-deep);
+  }
+  .test-values {
+    font-size: 13.5px;
+    color: #8A968F;
+    margin-top: 3px;
+  }
+  .test-values .value {
+    font-weight: 700;
+    color: var(--ink-deep);
+    font-size: 15px;
+  }
+
+  .status-pill {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    background: var(--status-normal-bg);
+    color: var(--status-normal);
+  }
+  .test-card.watch .status-pill { background: var(--status-watch-bg); color: var(--status-watch); }
+  .test-card.attention .status-pill { background: var(--status-attention-bg); color: var(--status-attention); }
+
+  .test-explain {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: #3E4C46;
+    margin-top: 10px;
+  }
+  .test-recommend {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #5C6E68;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--sage);
+    display: flex;
+    gap: 8px;
+  }
+  .test-recommend .rec-icon { flex-shrink: 0; margin-top: 1px; }
+
+  footer {
+    text-align: center;
+    padding: 28px 0 40px;
+    font-size: 12.5px;
+    color: #A7B1AB;
+  }
+
+  [lang="hi"] { font-family: 'Noto Sans Devanagari', var(--sans); }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 0 16px; }
+    .header-row { flex-direction: row; }
+    .hero { padding: 40px 0 28px; }
+    .upload-zone { padding: 36px 18px; }
+    .test-card-top { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <div class="logo"><span>ReportSathi</span><span class="dot">.</span></div>
+    <div class="lang-toggle" id="langToggle" data-lang="en">
+      <div class="pill-bg"></div>
+      <button data-lang="en" class="active" onclick="setLanguage('en')">English</button>
+      <button data-lang="hi" lang="hi" onclick="setLanguage('hi')">हिंदी</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero" id="heroSection">
+    <h1 id="heroTitle">Your medical reports, <em>explained simply</em></h1>
+    <p id="heroSub">Upload a lab report and get a clear, plain-language summary — in the language you're comfortable in.</p>
+  </section>
+
+  <section id="uploadSection">
+    <div class="upload-zone" id="uploadZone">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+      </div>
+      <div class="primary-text" id="uploadPrimary">Drop your report here, or click to choose a file</div>
+      <div class="secondary-text" id="uploadSecondary">Supports PDF, JPG, PNG, and TXT</div>
+      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.txt">
+    </div>
+
+    <div class="file-chip" id="fileChip">
+      <span class="name" id="fileName"></span>
+      <button class="remove" id="removeFile">✕</button>
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn" disabled>Analyze report</button>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <p class="disclaimer" id="disclaimerText">
+      <strong>Not a diagnosis.</strong> ReportSathi explains what your report says in plain language. It does not replace advice from a qualified doctor — always discuss your results with one. Your file is processed only for this session and isn't stored.
+    </p>
+  </section>
+
+  <section class="loading" id="loadingSection">
+    <div class="spinner"></div>
+    <p id="loadingText">Reading your report…</p>
+  </section>
+
+  <section class="results" id="resultsSection">
+    <div class="results-header">
+      <h2 id="resultsTitle">Your summary</h2>
+      <button class="new-report-btn" id="newReportBtn">Upload another report</button>
+    </div>
+    <div class="summary-banner" id="summaryBanner" style="display:none;">
+      <span class="label" id="overviewLabel">Overview</span>
+      <span id="overviewText"></span>
+    </div>
+    <div id="cardsContainer"></div>
+  </section>
+
+</main>
+
+<footer>
+  <span id="footerText">ReportSathi — built to make health information understandable for everyone.</span>
+</footer>
+
+<script>
+  // ---------------- i18n ----------------
+  const STRINGS = {
+    en: {
+      heroTitle: 'Your medical reports, <em>explained simply</em>',
+      heroSub: "Upload a lab report and get a clear, plain-language summary — in the language you're comfortable in.",
+      uploadPrimary: 'Drop your report here, or click to choose a file',
+      uploadSecondary: 'Supports PDF, JPG, PNG, and TXT',
+      analyzeBtn: 'Analyze report',
+      analyzeBtnLoading: 'Analyzing…',
+      disclaimer: '<strong>Not a diagnosis.</strong> ReportSathi explains what your report says in plain language. It does not replace advice from a qualified doctor — always discuss your results with one. Your file is processed only for this session and isn\'t stored.',
+      loadingText: 'Reading your report…',
+      resultsTitle: 'Your summary',
+      newReportBtn: 'Upload another report',
+      overviewLabel: 'Overview',
+      footerText: 'ReportSathi — built to make health information understandable for everyone.',
+      errorGeneric: "Something went wrong while reading your report. Please try again, or try a clearer copy of the file.",
+      errorNoTests: "We couldn't find recognizable test results in this file. Please check the file and try again.",
+      errorOverloaded: "Our AI service is a little busy right now. We're retrying automatically — this usually resolves in a few seconds.",
+      errorTruncated: "Your report has a lot of detail and the response got cut off. Please try again — we've increased the response size.",
+      statusNormal: 'Normal',
+      statusWatch: 'Keep an eye on this',
+      statusAttention: 'Needs attention',
+      recommendLabel: 'What you might do:'
+    },
+    hi: {
+      heroTitle: 'आपकी मेडिकल रिपोर्ट, <em>आसान भाषा में</em>',
+      heroSub: 'अपनी लैब रिपोर्ट अपलोड करें और उसे सरल भाषा में समझें — अपनी पसंद की भाषा में।',
+      uploadPrimary: 'अपनी रिपोर्ट यहाँ डालें, या फ़ाइल चुनने के लिए क्लिक करें',
+      uploadSecondary: 'PDF, JPG, PNG और TXT समर्थित हैं',
+      analyzeBtn: 'रिपोर्ट जांचें',
+      analyzeBtnLoading: 'जांच की जा रही है…',
+      disclaimer: '<strong>यह कोई निदान नहीं है।</strong> ReportSathi आपकी रिपोर्ट को सरल भाषा में समझाता है। यह किसी योग्य डॉक्टर की सलाह का विकल्प नहीं है — अपने परिणामों पर हमेशा डॉक्टर से चर्चा करें। आपकी फ़ाइल केवल इस सत्र के लिए उपयोग होती है और सुरक्षित नहीं रखी जाती।',
+      loadingText: 'आपकी रिपोर्ट पढ़ी जा रही है…',
+      resultsTitle: 'आपका सारांश',
+      newReportBtn: 'दूसरी रिपोर्ट अपलोड करें',
+      overviewLabel: 'सारांश',
+      footerText: 'ReportSathi — स्वास्थ्य जानकारी को सबके लिए समझने योग्य बनाने हेतु बनाया गया।',
+      errorGeneric: 'आपकी रिपोर्ट पढ़ते समय कुछ गड़बड़ हुई। कृपया फिर से प्रयास करें, या फ़ाइल की स्पष्ट कॉपी आज़माएं।',
+      errorNoTests: 'इस फ़ाइल में हमें पहचानने योग्य टेस्ट परिणाम नहीं मिले। कृपया फ़ाइल जांचें और फिर से प्रयास करें।',
+      errorOverloaded: 'हमारी AI सेवा अभी थोड़ी व्यस्त है। हम स्वतः फिर से प्रयास कर रहे हैं — यह आमतौर पर कुछ ही सेकंड में ठीक हो जाता है।',
+      errorTruncated: 'आपकी रिपोर्ट में काफी विवरण है, इसलिए जवाब अधूरा रह गया। कृपया फिर से प्रयास करें — हमने जवाब का आकार बढ़ा दिया है।',
+      statusNormal: 'सामान्य',
+      statusWatch: 'ध्यान रखें',
+      statusAttention: 'ध्यान देने की आवश्यकता',
+      recommendLabel: 'आप क्या कर सकते हैं:'
+    }
+  };
+
+  let currentLang = 'en';
+  let selectedFile = null;
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    document.getElementById('langToggle').setAttribute('data-lang', lang);
+    document.querySelectorAll('.lang-toggle button').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+    document.documentElement.lang = lang;
+
+    const s = STRINGS[lang];
+    document.getElementById('heroTitle').innerHTML = s.heroTitle;
+    document.getElementById('heroSub').textContent = s.heroSub;
+    document.getElementById('uploadPrimary').textContent = s.uploadPrimary;
+    document.getElementById('uploadSecondary').textContent = s.uploadSecondary;
+    document.getElementById('analyzeBtn').textContent = s.analyzeBtn;
+    document.getElementById('analyzeBtn').setAttribute('lang', lang === 'hi' ? 'hi' : '');
+    document.getElementById('disclaimerText').innerHTML = s.disclaimer;
+    document.getElementById('loadingText').textContent = s.loadingText;
+    document.getElementById('resultsTitle').textContent = s.resultsTitle;
+    document.getElementById('newReportBtn').textContent = s.newReportBtn;
+    document.getElementById('overviewLabel').textContent = s.overviewLabel;
+    document.getElementById('footerText').textContent = s.footerText;
+
+    // If results already shown, re-render labels (status pills, recommend label) without re-calling API
+    if (window.__lastResult) {
+      renderResults(window.__lastResult);
+    }
+  }
+
+  // ---------------- Upload handling ----------------
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const fileChip = document.getElementById('fileChip');
+  const fileName = document.getElementById('fileName');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  uploadZone.addEventListener('click', () => fileInput.click());
+
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+  });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  document.getElementById('removeFile').addEventListener('click', (e) => {
+    e.stopPropagation();
+    selectedFile = null;
+    fileChip.classList.remove('show');
+    fileInput.value = '';
+    analyzeBtn.disabled = true;
+  });
+
+  function handleFile(file) {
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileChip.classList.add('show');
+    analyzeBtn.disabled = false;
+    errorBox.classList.remove('show');
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+
+  // ---------------- File -> base64 ----------------
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = () => reject(new Error('File read failed'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function getMediaType(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const map = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', txt: 'text/plain' };
+    return map[ext] || file.type || 'application/octet-stream';
+  }
+
+  // ---------------- Retry helper for transient API overload (529) ----------------
+  async function callClaudeWithRetry(requestBody, maxRetries = 3) {
+    let lastErr;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      let response;
+      try {
+        response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+      } catch (networkErr) {
+        lastErr = networkErr;
+        await sleep(backoffDelay(attempt));
+        continue;
+      }
+
+      if (response.status === 529 || response.status === 503) {
+        lastErr = new Error('OVERLOADED');
+        if (attempt < maxRetries) {
+          updateLoadingMessage(STRINGS[currentLang].errorOverloaded);
+          await sleep(backoffDelay(attempt));
+          continue;
+        }
+        throw lastErr;
+      }
+
+      if (!response.ok) {
+        throw new Error('API request failed: ' + response.status);
+      }
+
+      return await response.json();
+    }
+    throw lastErr || new Error('OVERLOADED');
+  }
+
+  function backoffDelay(attempt) {
+    return Math.min(1000 * Math.pow(2, attempt), 8000);
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function updateLoadingMessage(msg) {
+    const el = document.getElementById('loadingText');
+    if (el) el.textContent = msg;
+  }
+
+  // ---------------- Salvage partial JSON when response gets truncated ----------------
+  function salvagePartialJson(text) {
+    try {
+      // Try to pull out a complete "overview" string
+      const overviewMatch = text.match(/"overview"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      const overview = overviewMatch ? overviewMatch[1] : '';
+
+      // Try to pull out every complete test object: { ... } inside the tests array
+      const tests = [];
+      const testObjectRegex = /\{\s*"name"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"value"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"range"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"status"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"explanation"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"recommendation"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g;
+
+      let match;
+      while ((match = testObjectRegex.exec(text)) !== null) {
+        tests.push({
+          name: match[1],
+          value: match[2],
+          range: match[3],
+          status: match[4],
+          explanation: match[5],
+          recommendation: match[6]
+        });
+      }
+
+      if (tests.length === 0) return null;
+      return { overview, tests, _partial: true };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ---------------- Analyze ----------------
+  analyzeBtn.addEventListener('click', analyzeReport);
+
+  async function analyzeReport() {
+    if (!selectedFile) return;
+    errorBox.classList.remove('show');
+
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('heroSection').style.display = 'none';
+    document.getElementById('loadingText').textContent = STRINGS[currentLang].loadingText;
+    document.getElementById('loadingSection').classList.add('show');
+    document.getElementById('resultsSection').classList.remove('show');
+
+    try {
+      const mediaType = getMediaType(selectedFile);
+      let contentBlock;
+
+      if (mediaType === 'text/plain') {
+        const text = await selectedFile.text();
+        contentBlock = { type: 'text', text: `Medical report content:\n\n${text}` };
+      } else if (mediaType === 'application/pdf') {
+        const b64 = await fileToBase64(selectedFile);
+        contentBlock = { type: 'document', source: { type: 'base64', media_type: mediaType, data: b64 } };
+      } else {
+        const b64 = await fileToBase64(selectedFile);
+        contentBlock = { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } };
+      }
+
+      const languageInstruction = currentLang === 'hi'
+        ? 'Respond with all text content (overview, test names if helpful, explanations, recommendations) in Hindi (Devanagari script), in a warm, simple, conversational tone suitable for someone without medical training. Keep numeric values and units as given in the report.'
+        : 'Respond with all text content in clear, simple English, in a warm, conversational tone suitable for someone without medical training.';
+
+      const systemPrompt = `You are a careful, warm medical-report interpreter for a consumer app called ReportSathi. You read lab/diagnostic test reports and explain them in plain, non-alarming language for someone with no medical background.
+
+${languageInstruction}
+
+Rules:
+- Extract every distinct test result you can find (e.g. Hemoglobin, Glucose, Cholesterol, TSH, Creatinine, etc.)
+- For each test, determine status as one of: "normal", "watch" (borderline/slightly outside range), or "attention" (clearly outside normal range or flagged in the report)
+- Write a 1-3 sentence plain-language explanation of what the test measures and what this result means for the person
+- Write a short, sensible, non-alarming recommendation (e.g. "mention this at your next check-up", "stay hydrated and recheck in a few weeks") — never give a diagnosis or prescribe treatment
+- Write a 2-3 sentence overall overview summarizing the report at the top
+- If the file does not appear to contain any recognizable medical test results, return {"error": "no_tests_found"}
+- Respond ONLY with valid JSON, no markdown fences, no preamble, matching this exact schema:
+
+{
+  "overview": "string",
+  "tests": [
+    {
+      "name": "string",
+      "value": "string (e.g. '14.2 g/dL')",
+      "range": "string (e.g. 'Normal: 13.5–17.5 g/dL')",
+      "status": "normal" | "watch" | "attention",
+      "explanation": "string",
+      "recommendation": "string"
+    }
+  ]
+}`;
+
+      const requestBody = {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              contentBlock,
+              { type: 'text', text: 'Please analyze this medical report and respond with the JSON described in your instructions.' }
+            ]
+          }
+        ]
+      };
+
+      const data = await callClaudeWithRetry(requestBody);
+      const textBlock = data.content.find(b => b.type === 'text');
+      if (!textBlock) throw new Error('No text response from model');
+
+      if (data.stop_reason === 'max_tokens') {
+        throw new Error('TRUNCATED');
+      }
+
+      let cleaned = textBlock.text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
+
+      let parsed;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch (parseErr) {
+        // Response was likely cut off mid-string — try to salvage what we can
+        const salvaged = salvagePartialJson(cleaned);
+        if (salvaged && salvaged.tests && salvaged.tests.length > 0) {
+          parsed = salvaged;
+        } else {
+          throw new Error('TRUNCATED');
+        }
+      }
+
+      if (parsed.error === 'no_tests_found') {
+        throw new Error('NO_TESTS_FOUND');
+      }
+
+      window.__lastResult = parsed;
+      renderResults(parsed);
+
+      document.getElementById('loadingSection').classList.remove('show');
+      document.getElementById('resultsSection').classList.add('show');
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('loadingSection').classList.remove('show');
+      document.getElementById('uploadSection').style.display = 'block';
+      document.getElementById('heroSection').style.display = 'block';
+
+      const s = STRINGS[currentLang];
+      let msg = s.errorGeneric;
+      if (err.message === 'NO_TESTS_FOUND') msg = s.errorNoTests;
+      else if (err.message === 'OVERLOADED') msg = s.errorOverloaded;
+      else if (err.message === 'TRUNCATED') msg = s.errorTruncated;
+
+      showError(msg);
+    }
+  }
+
+  function renderResults(parsed) {
+    const s = STRINGS[currentLang];
+
+    const banner = document.getElementById('summaryBanner');
+    if (parsed.overview) {
+      document.getElementById('overviewText').textContent = parsed.overview;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+
+    const container = document.getElementById('cardsContainer');
+    container.innerHTML = '';
+
+    const statusLabels = { normal: s.statusNormal, watch: s.statusWatch, attention: s.statusAttention };
+
+    (parsed.tests || []).forEach(test => {
+      const card = document.createElement('div');
+      card.className = 'test-card ' + (test.status || 'normal');
+
+      card.innerHTML = `
+        <div class="test-card-top">
+          <div>
+            <div class="test-name">${escapeHtml(test.name || '')}</div>
+            <div class="test-values"><span class="value">${escapeHtml(test.value || '')}</span> &nbsp;·&nbsp; ${escapeHtml(test.range || '')}</div>
+          </div>
+          <div class="status-pill">${statusLabels[test.status] || statusLabels.normal}</div>
+        </div>
+        <div class="test-explain">${escapeHtml(test.explanation || '')}</div>
+        ${test.recommendation ? `
+        <div class="test-recommend">
+          <span class="rec-icon">💡</span>
+          <span><strong>${s.recommendLabel}</strong> ${escapeHtml(test.recommendation)}</span>
+        </div>` : ''}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---------------- New report ----------------
+  document.getElementById('newReportBtn').addEventListener('click', () => {
+    selectedFile = null;
+    window.__lastResult = null;
+    fileChip.classList.remove('show');
+    fileInput.value = '';
+    analyzeBtn.disabled = true;
+    errorBox.classList.remove('show');
+    document.getElementById('resultsSection').classList.remove('show');
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('heroSection').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+
+</body>
+</html>
