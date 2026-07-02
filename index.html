@@ -488,6 +488,7 @@
       errorNoTests: "We couldn't find recognizable test results in this file. Please check the file and try again.",
       errorOverloaded: "Our AI service is a little busy right now. We're retrying automatically — this usually resolves in a few seconds.",
       errorTruncated: "Your report has a lot of detail and the response got cut off. Please try again — we've increased the response size.",
+      errorFileTooLarge: "This file is too large (max 3.5 MB). Please upload a smaller or more compressed copy.",
       statusNormal: 'Normal',
       statusWatch: 'Keep an eye on this',
       statusAttention: 'Needs attention',
@@ -510,6 +511,7 @@
       errorNoTests: 'इस फ़ाइल में हमें पहचानने योग्य टेस्ट परिणाम नहीं मिले। कृपया फ़ाइल जांचें और फिर से प्रयास करें।',
       errorOverloaded: 'हमारी AI सेवा अभी थोड़ी व्यस्त है। हम स्वतः फिर से प्रयास कर रहे हैं — यह आमतौर पर कुछ ही सेकंड में ठीक हो जाता है।',
       errorTruncated: 'आपकी रिपोर्ट में काफी विवरण है, इसलिए जवाब अधूरा रह गया। कृपया फिर से प्रयास करें — हमने जवाब का आकार बढ़ा दिया है।',
+      errorFileTooLarge: 'यह फ़ाइल बहुत बड़ी है (अधिकतम 3.5 MB)। कृपया छोटी या संपीड़ित कॉपी अपलोड करें।',
       statusNormal: 'सामान्य',
       statusWatch: 'ध्यान रखें',
       statusAttention: 'ध्यान देने की आवश्यकता',
@@ -581,7 +583,17 @@
     analyzeBtn.disabled = true;
   });
 
+  const MAX_FILE_SIZE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB raw — base64 adds ~33%, staying under Claude's ~5MB per-image limit and Netlify's function payload cap
+
   function handleFile(file) {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      selectedFile = null;
+      fileChip.classList.remove('show');
+      fileInput.value = '';
+      analyzeBtn.disabled = true;
+      showError(STRINGS[currentLang].errorFileTooLarge);
+      return;
+    }
     selectedFile = file;
     fileName.textContent = file.name;
     fileChip.classList.add('show');
@@ -638,6 +650,12 @@
       }
 
       if (!response.ok) {
+        let detail = '';
+        try { detail = await response.text(); } catch (e) { /* ignore */ }
+        console.error('Analyze request failed', response.status, detail);
+        if (response.status === 413) {
+          throw new Error('FILE_TOO_LARGE');
+        }
         throw new Error('API request failed: ' + response.status);
       }
 
@@ -807,6 +825,7 @@ Rules:
       if (err.message === 'NO_TESTS_FOUND') msg = s.errorNoTests;
       else if (err.message === 'OVERLOADED') msg = s.errorOverloaded;
       else if (err.message === 'TRUNCATED') msg = s.errorTruncated;
+      else if (err.message === 'FILE_TOO_LARGE') msg = s.errorFileTooLarge;
 
       showError(msg);
     }
