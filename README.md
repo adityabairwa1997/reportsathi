@@ -19,7 +19,7 @@ This is a single-file HTML prototype, built to validate the core flow before inv
 ## Tech
 
 - Single-file HTML/CSS/JS — no build step, no backend
-- Claude Sonnet API (`claude-sonnet-4-6`) for extraction + explanation
+- Claude Haiku API (`claude-haiku-4-5`) for extraction + explanation
 - Client-side only — files are not stored or persisted anywhere
 
 ## Safety notes
