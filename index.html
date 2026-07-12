@@ -22,6 +22,8 @@
     --status-watch-bg: #FBF1E1;
     --status-attention: #B4503F;
     --status-attention-bg: #FAEAE6;
+    --muted: #4F5D57;
+    --muted-light: #6B7873;
     --serif: 'Lora', 'Noto Sans Devanagari', serif;
     --sans: 'Inter', 'Noto Sans Devanagari', sans-serif;
     --radius: 14px;
@@ -131,7 +133,7 @@
   .hero p {
     font-size: 16.5px;
     line-height: 1.6;
-    color: #5C6E68;
+    color: var(--muted);
     max-width: 480px;
     margin: 0 auto;
   }
@@ -167,7 +169,7 @@
   }
   .upload-zone .secondary-text {
     font-size: 13.5px;
-    color: #8A968F;
+    color: var(--muted);
   }
   .upload-zone input[type="file"] { display: none; }
 
@@ -187,7 +189,7 @@
   .file-chip .remove {
     margin-left: auto;
     cursor: pointer;
-    color: #8A968F;
+    color: var(--muted);
     font-size: 13px;
     background: none;
     border: none;
@@ -219,12 +221,12 @@
   .disclaimer {
     margin-top: 18px;
     font-size: 12.5px;
-    color: #8A968F;
+    color: var(--muted);
     text-align: center;
     line-height: 1.55;
     padding: 0 12px;
   }
-  .disclaimer strong { color: #6B7873; }
+  .disclaimer strong { color: var(--muted-light); }
 
   /* ---------- Loading ---------- */
   .loading {
@@ -243,7 +245,7 @@
     animation: spin 0.85s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading p { color: #5C6E68; font-size: 14.5px; }
+  .loading p { color: var(--muted); font-size: 14.5px; }
 
   /* ---------- Error ---------- */
   .error-box {
@@ -314,6 +316,45 @@
     display: block;
   }
 
+  /* ---------- Overall analysis stat tiles ---------- */
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .stat-tile {
+    flex: 1;
+    background: white;
+    border: 1px solid var(--sage-line);
+    border-top: 3px solid var(--status-normal);
+    border-radius: var(--radius);
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .stat-tile.watch { border-top-color: var(--status-watch); }
+  .stat-tile.attention { border-top-color: var(--status-attention); }
+  .stat-tile .stat-num {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--status-normal);
+  }
+  .stat-tile.watch .stat-num { color: var(--status-watch); }
+  .stat-tile.attention .stat-num { color: var(--status-attention); }
+  .stat-tile .stat-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  @media (max-width: 560px) {
+    .stats-row { gap: 8px; }
+    .stat-tile { padding: 12px 6px; }
+    .stat-tile .stat-num { font-size: 22px; }
+    .stat-tile .stat-label { font-size: 11px; }
+  }
+
   .test-card {
     background: white;
     border: 1px solid var(--sage-line);
@@ -339,7 +380,7 @@
   }
   .test-values {
     font-size: 13.5px;
-    color: #8A968F;
+    color: var(--muted);
     margin-top: 3px;
   }
   .test-values .value {
@@ -370,7 +411,7 @@
   .test-recommend {
     font-size: 13.5px;
     line-height: 1.6;
-    color: #5C6E68;
+    color: var(--muted);
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid var(--sage);
@@ -383,7 +424,7 @@
     text-align: center;
     padding: 28px 0 40px;
     font-size: 12.5px;
-    color: #A7B1AB;
+    color: var(--muted-light);
   }
 
   [lang="hi"] { font-family: 'Noto Sans Devanagari', var(--sans); }
@@ -459,6 +500,20 @@
       <span class="label" id="overviewLabel">Overview</span>
       <span id="overviewText"></span>
     </div>
+    <div class="stats-row" id="statsRow" style="display:none;">
+      <div class="stat-tile normal">
+        <div class="stat-num" id="statNormal">0</div>
+        <div class="stat-label" id="statNormalLabel">Normal</div>
+      </div>
+      <div class="stat-tile watch">
+        <div class="stat-num" id="statWatch">0</div>
+        <div class="stat-label" id="statWatchLabel">Keep an eye</div>
+      </div>
+      <div class="stat-tile attention">
+        <div class="stat-num" id="statAttention">0</div>
+        <div class="stat-label" id="statAttentionLabel">Needs attention</div>
+      </div>
+    </div>
     <div id="cardsContainer"></div>
   </section>
 
@@ -492,6 +547,9 @@
       statusNormal: 'Normal',
       statusWatch: 'Keep an eye on this',
       statusAttention: 'Needs attention',
+      statTileNormal: 'Normal',
+      statTileWatch: 'Watch',
+      statTileAttention: 'Attention',
       recommendLabel: 'What you might do:'
     },
     hi: {
@@ -515,6 +573,9 @@
       statusNormal: 'सामान्य',
       statusWatch: 'ध्यान रखें',
       statusAttention: 'ध्यान देने की आवश्यकता',
+      statTileNormal: 'सामान्य',
+      statTileWatch: 'ध्यान दें',
+      statTileAttention: 'आवश्यक ध्यान',
       recommendLabel: 'आप क्या कर सकते हैं:'
     }
   };
@@ -842,12 +903,31 @@ Rules:
       banner.style.display = 'none';
     }
 
+    const tests = parsed.tests || [];
+    const statsRow = document.getElementById('statsRow');
+    if (tests.length) {
+      const counts = { normal: 0, watch: 0, attention: 0 };
+      tests.forEach(t => {
+        const st = counts[t.status] !== undefined ? t.status : 'normal';
+        counts[st]++;
+      });
+      document.getElementById('statNormal').textContent = counts.normal;
+      document.getElementById('statWatch').textContent = counts.watch;
+      document.getElementById('statAttention').textContent = counts.attention;
+      document.getElementById('statNormalLabel').textContent = s.statTileNormal;
+      document.getElementById('statWatchLabel').textContent = s.statTileWatch;
+      document.getElementById('statAttentionLabel').textContent = s.statTileAttention;
+      statsRow.style.display = 'flex';
+    } else {
+      statsRow.style.display = 'none';
+    }
+
     const container = document.getElementById('cardsContainer');
     container.innerHTML = '';
 
     const statusLabels = { normal: s.statusNormal, watch: s.statusWatch, attention: s.statusAttention };
 
-    (parsed.tests || []).forEach(test => {
+    tests.forEach(test => {
       const card = document.createElement('div');
       card.className = 'test-card ' + (test.status || 'normal');
 
